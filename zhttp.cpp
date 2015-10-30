@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <pthread.h>
 #include <errno.h>
 
@@ -76,7 +77,7 @@ namespace zhttp
     void ZHttpApp::run(int nthreads)
     {
         // 主线程监听
-        int fd = bind_socket(port_);
+        int fd = bind_socket();
         if( fd <= 0 )
             return;
 
@@ -125,7 +126,7 @@ namespace zhttp
         }
     }
 
-    int ZHttpApp::bind_socket(uint16_t port)
+    int ZHttpApp::bind_socket()
     {
         int fd = socket(AF_INET, SOCK_STREAM, 0);
         assert( fd > 0 );
@@ -138,8 +139,8 @@ namespace zhttp
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = INADDR_ANY;
-        addr.sin_port = htons(port);
+        addr.sin_addr.s_addr = inet_addr(ip_.c_str());
+        addr.sin_port = htons(port_);
 
         ret = bind(fd, (struct sockaddr*)&addr, sizeof(addr));
         if( 0 != ret )

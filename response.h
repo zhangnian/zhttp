@@ -17,6 +17,11 @@ namespace zhttp
 
         }
 
+        void set_keepalive()
+        {
+            add_header("Connection", "Keep-Alive");
+        }
+
         void set_content_type(const std::string& type)
         {
             add_header("Content-Type", type);

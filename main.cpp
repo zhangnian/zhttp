@@ -11,6 +11,7 @@ void handler2(Request& req, Response& res)
     //printf("[handler2 tid: %d]处理请求的业务逻辑\n", pthread_self());
     //printf("你请求的URL为: %s\n", req.GetUrl().c_str());
     res.set_content_type("application/json");
+    res.set_keepalive();
     res.add_header("sign", "this is the signed string...");
     res.write("{\"name\":\"zn\", \"age\":27}");
 }

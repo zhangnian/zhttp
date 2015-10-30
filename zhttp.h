@@ -42,7 +42,7 @@ namespace zhttp
         }
 
     private:
-        int bind_socket(uint16_t port);
+        int bind_socket();
 
         static void* Dispatch(void* arg);
 
