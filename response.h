@@ -40,6 +40,12 @@ namespace zhttp
             evhttp_add_header(req_->output_headers, key.c_str(), val.c_str());
         }
 
+        void writeJson(const std::string& data)
+        {
+            set_content_type(kJSON);
+            write(data);
+        }
+
         void write(const std::string& data)
         {
             struct evbuffer* buf = evhttp_request_get_output_buffer(req_);

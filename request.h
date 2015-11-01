@@ -84,6 +84,9 @@ namespace zhttp
             int ret = evhttp_parse_query(request_uri, &params_);
             CHECK_RET_ZERO(ret);
 
+            // 取出HTTP请求headers
+            headers_ = *req->input_headers;
+
             if( method_ == Request::POST )
             {
                 static char buf[kMaxBufSize] = { 0 };
@@ -102,7 +105,7 @@ namespace zhttp
             return 0;
         }
 
-        std::string GetStr(const std::string& name, const std::string& default_val)
+        std::string GetQueryStr(const std::string& name, const std::string& default_val = "")
         {
             const char* val = evhttp_find_header(&params_, name.c_str());
             if( NULL == val )
@@ -110,7 +113,7 @@ namespace zhttp
             return std::string(val);
         }
 
-        int GetInt(const std::string& name, int default_val)
+        int GetQueryInt(const std::string& name, int default_val = -1)
         {
             const char* val = evhttp_find_header(&params_, name.c_str());
             if( NULL == val )
@@ -123,12 +126,22 @@ namespace zhttp
             return body_;
         }
 
+
+        std::string GetHeader(const std::string& name)
+        {
+            const char* val = evhttp_find_header(&headers_, name.c_str());
+            if( NULL == val )
+                return "";
+            return std::string(val);
+        }
+
     private:
         std::string url_;
         std::string full_url_;
         std::string body_;
         method_t method_;
-        struct evkeyvalq params_;
+        struct evkeyvalq params_;       // 查询字符串
+        struct evkeyvalq headers_;      // HTTP请求头
     };
 }
 

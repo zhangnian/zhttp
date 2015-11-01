@@ -5,41 +5,53 @@
 
 #include "zhttp.h"
 #include "zk_helper.h"
-
+#include "json_utils.h"
 
 using namespace zhttp;
 
+#define RETURN_ERR(code, msg) \
+    res.writeJson(JsonUtils::MakeResponse(code, msg)); \
+    return;
 
-void handler2(Request& req, Response& res)
+
+void handle_query(Request& req, Response& res)
 {
-    //printf("[handler2 tid: %d]处理请求的业务逻辑\n", pthread_self());
-    //printf("你请求的URL为: %s\n", req.GetUrl().c_str());
-    res.set_content_type(Response::kJSON);
-    //res.set_keepalive();
-    //res.add_header("sign", "this is the signed string...");
-    res.write("{\"name\":\"张念\", \"age\":27}");
+    std::string sign = req.GetHeader("sign");
+    printf("sign: %s\n", sign.c_str());
+
+    const std::string& uri = req.GetUrl();
+    if( uri != "/query")
+    {
+        RETURN_ERR(10002, "请求URI错误");
+    }
+
+    const std::string& s_name = req.GetQueryStr("s_name");
+    if( s_name.size() == 0 )
+    {
+        RETURN_ERR(10003, "参数错误");
+    }
+
+    // 去注册中心查询服务地址
+    std::map<std::string, std::string> dict_args;
+    dict_args["s_name"] = s_name;
+    dict_args["s_addr"] = "http://api.example.com/v1/chat";
+    res.writeJson(JsonUtils::MakeResponse(0, "", dict_args));
+
+    return;
 }
 
 
-void handler1(Request& req, Response& res)
-{
-    //printf("[ handler1tid: %d]处理请求的业务逻辑\n", pthread_self());
-
-    //printf("你请求的URL为: %s\n", req.GetUrl().c_str());
-    res.write("handler1 response!\n");
-}
 
 int main(int argc, char* argv[])
 {
     printf("zhttp start...\n");
 
-    ZK_INS->registe_service("/test", "http://58.67.219.143:12321/test");
+    //ZK_INS->registe_service("/test", "http://58.67.219.143:12321/test");
 
     ZHttpApp app;
-    app.route("/", boost::bind(&handler1, _1, _2))
-       .route("/test", boost::bind(&handler2, _1, _2))
-       .listen("0.0.0.0", 12321)
-       .run(3);
+    app.route("/query", boost::bind(&handle_query, _1, _2))
+       .listen("0.0.0.0", 12345)
+       .run(4);
 
 
 
