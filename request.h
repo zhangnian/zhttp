@@ -85,7 +85,7 @@ namespace zhttp
             CHECK_RET_ZERO(ret);
 
             // 取出HTTP请求headers
-            headers_ = *req->input_headers;
+            headers_ = evhttp_request_get_input_headers(req);
 
             if( method_ == Request::POST )
             {
@@ -129,7 +129,7 @@ namespace zhttp
 
         std::string GetHeader(const std::string& name)
         {
-            const char* val = evhttp_find_header(&headers_, name.c_str());
+            const char* val = evhttp_find_header(headers_, name.c_str());
             if( NULL == val )
                 return "";
             return std::string(val);
@@ -141,7 +141,7 @@ namespace zhttp
         std::string body_;
         method_t method_;
         struct evkeyvalq params_;       // 查询字符串
-        struct evkeyvalq headers_;      // HTTP请求头
+        struct evkeyvalq* headers_;      // HTTP请求头
     };
 }
 
