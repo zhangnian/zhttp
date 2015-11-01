@@ -8,6 +8,7 @@
 
 #include "request.h"
 #include "response.h"
+#include "statistics.h"
 
 
 namespace zhttp
@@ -35,10 +36,16 @@ namespace zhttp
           */
          void run(int nthreads = 1);
 
+
     public:
         inline UriHandlersMap& GetUriHandlers()
         {
             return uri_handlers_;
+        }
+
+        inline Statistics& get_stat()
+        {
+            return stat_;
         }
 
     private:
@@ -46,10 +53,13 @@ namespace zhttp
 
         static void* Dispatch(void* arg);
 
+        void handle_diagnostics(Request& req, Response& res);
+
     private:
         UriHandlersMap uri_handlers_;
         std::string ip_;
         uint16_t port_;
+        Statistics stat_;
 
     };
 }

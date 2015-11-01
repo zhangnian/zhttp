@@ -11,20 +11,28 @@ namespace zhttp
     class Response
     {
     public:
+        enum ContentType
+        {
+            kJSON,
+            kXML,
+            kTEXT,
+        };
+
         Response(struct evhttp_request* req)
             : req_(req)
         {
 
         }
 
-        void set_keepalive()
+        void set_content_type(ContentType type)
         {
-            add_header("Connection", "Keep-Alive");
-        }
-
-        void set_content_type(const std::string& type)
-        {
-            add_header("Content-Type", type);
+            // Content-Type : text/html; charset=utf-8
+            if( type == kJSON )
+                add_header("Content-Type", "application/json; charset=utf-8");
+            else if(type == kXML )
+                add_header("Content-Type", "application/xml; charset=utf-8");
+            else if(type == kTEXT )
+                add_header("Content-Type", "text/html; charset=utf-8");
         }
 
         void add_header(const std::string& key, const std::string& val)

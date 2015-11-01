@@ -11,16 +11,24 @@
 #include <pthread.h>
 #include <errno.h>
 
+#include <document.h>
+#include <prettywriter.h>
+
+#include <evhttp.h>
 
 #include "request.h"
 #include "response.h"
 
-#include <evhttp.h>
+#include "daemon.h"
+
+using namespace rapidjson;
 
 void evhttp_handler(struct evhttp_request* request, void* data)
 {
     zhttp::ZHttpApp* app = static_cast<zhttp::ZHttpApp*>(data);
     assert( NULL != app );
+
+    app->get_stat().total_req_.increment();
 
     zhttp::Request req;
     int ret = req.ParseRequest(request);
@@ -35,6 +43,8 @@ void evhttp_handler(struct evhttp_request* request, void* data)
     {
         iter->second(req, res);
     }
+
+    app->get_stat().total_res_.increment();
 }
 
 
@@ -47,6 +57,35 @@ namespace zhttp
     }
 
 
+    void ZHttpApp::handle_diagnostics(Request& req, Response& res)
+    {
+        Document doc;
+        Document::AllocatorType& allocator = doc.GetAllocator();
+
+        Value root(kObjectType);
+
+        Value item_code(0);
+        root.AddMember("code", item_code, allocator);
+
+        Value item_start_ts(stat_.start_ts_);
+        Value item_total_req(stat_.total_req_.get());
+        Value item_total_res(stat_.total_res_.get());
+        Value item_data(kObjectType);
+        item_data.AddMember("启动时间", item_start_ts, allocator);
+        item_data.AddMember("总请求数", item_total_req, allocator);
+        item_data.AddMember("总响应数", item_total_res, allocator);
+
+        root.AddMember("data", item_data, allocator);
+
+
+        StringBuffer str_buf;
+        Writer<StringBuffer> writer(str_buf);
+        root.Accept(writer);
+
+        res.set_content_type(Response::kJSON);
+        res.write(str_buf.GetString());
+    }
+
     ZHttpApp& ZHttpApp::route(const std::string& uri, const UriHandler& handler)
     {
         UriHandlersMap::const_iterator iter = uri_handlers_.find(uri);
@@ -58,6 +97,9 @@ namespace zhttp
         {
             uri_handlers_.insert(std::pair<std::string, UriHandler>(uri, handler));
         }
+
+        // 注册一个调试接口
+        uri_handlers_.insert(std::pair<std::string, UriHandler>("/diagnostics", boost::bind(&ZHttpApp::handle_diagnostics, this, _1, _2)));
 
         assert( uri_handlers_.size() > 0 );
         return *this;
@@ -76,6 +118,8 @@ namespace zhttp
 
     void ZHttpApp::run(int nthreads)
     {
+        //daemonize();
+
         // 主线程监听
         int fd = bind_socket();
         if( fd <= 0 )
@@ -119,6 +163,7 @@ namespace zhttp
             }
         }
 
+        stat_.start_ts_ = (int)time(NULL);
 
         for (int i = 0; i < nthreads; i++)
         {
