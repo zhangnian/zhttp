@@ -16,25 +16,27 @@ namespace zhttp
     class JsonUtils
     {
     public:
-        static std::string MakeResponse(int code, const std::string& msg)
+        static std::string MakeResponse(int status, const std::string& info)
         {
             std::map<std::string, std::string> data;
-            return MakeResponse(code, msg, data);
+            return MakeResponse(status, info, data);
         }
 
-        static std::string MakeResponse(int code, const std::string& msg, std::map<std::string, std::string>& data)
+        static std::string MakeResponse(int status, const std::string& info, std::map<std::string, std::string>& data)
         {
             Document doc;
             Document::AllocatorType& allocator = doc.GetAllocator();
 
             Value root(kObjectType);
 
-            Value field_code(code);
-            Value field_msg(msg.c_str(), msg.size());
-            Value field_data(kObjectType);
+            Value field_header(kObjectType);
+            Value field_status(status);
+            Value field_info(info.c_str(), info.size());
 
-            root.AddMember("code", field_code, allocator);
-            root.AddMember("message", field_msg, allocator);
+            field_header.AddMember("status", field_status, allocator);
+            field_header.AddMember("info", field_info, allocator);
+
+            Value field_body(kObjectType);
 
             std::map<std::string, std::string>::iterator iter = data.begin();
             for(; iter != data.end(); ++iter)
@@ -45,10 +47,12 @@ namespace zhttp
                 Value field_k(key.c_str(), key.size());
                 Value field_v(val.c_str(), val.size());
 
-                field_data.AddMember(field_k, field_v, allocator);
+                field_body.AddMember(field_k, field_v, allocator);
             }
 
-            root.AddMember("data", field_data, allocator);
+            root.AddMember("response_header", field_header, allocator);
+            if( data.size() > 0 )
+                root.AddMember("response", field_body, allocator);
 
             StringBuffer buf;
             Writer<StringBuffer> writer(buf);

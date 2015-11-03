@@ -15,19 +15,22 @@ find_package(Threads REQUIRED)
 aux_source_directory(. DIR_SRCS)
 
 # 指定依赖的第三方头文件路径
+include_directories(/usr/include/mysql)
 include_directories(/data/DevComm/libevent-2.0.22/include)
 include_directories(/data/DevComm/zookeeper-3.4.6/include)
 include_directories(/data/DevComm/rapidjson)
+include_directories(/data/DevComm/mysqlpp/include)
+
 
 # 指定依赖的第三方库文件路径
 LINK_DIRECTORIES(/usr/local/lib)
 LINK_DIRECTORIES(/usr/lib64)
 LINK_DIRECTORIES(/data/DevComm/libevent-2.0.22/lib)
 LINK_DIRECTORIES(/data/DevComm/zookeeper-3.4.6/lib)
-
+LINK_DIRECTORIES(/data/DevComm/mysqlpp/lib)
 
 # 指定生成目标
 add_executable(zhttp ${DIR_SRCS})
 
 # 指定依赖的第三方静态/动态库
-target_link_libraries(zhttp Threads::Threads -ldl libevent.a libzookeeper_mt.a)
+target_link_libraries(zhttp Threads::Threads -ldl libevent.a libzookeeper_mt.a mysqlpp)

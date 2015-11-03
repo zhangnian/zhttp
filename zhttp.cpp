@@ -144,7 +144,6 @@ namespace zhttp
                 evhttp_set_cb(httpd, iter->first.c_str(), &evhttp_handler, this);
             }
 
-            // 工作线程accept同一个listen fd
             int ret = evhttp_accept_socket(httpd, fd);
             if( 0 != ret )
             {
